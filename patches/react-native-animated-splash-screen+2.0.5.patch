@@ -1,0 +1,130 @@
+diff --git a/node_modules/react-native-animated-splash-screen/lib/AnimatedSplash.js b/node_modules/react-native-animated-splash-screen/lib/AnimatedSplash.js
+index a935e81..c0cf8fe 100644
+--- a/node_modules/react-native-animated-splash-screen/lib/AnimatedSplash.js
++++ b/node_modules/react-native-animated-splash-screen/lib/AnimatedSplash.js
+@@ -1,7 +1,7 @@
+ /* @flow */
+ import PropTypes from "prop-types"
+ import * as React from "react"
+-import { View, Animated, StatusBar, StyleSheet } from "react-native"
++import { View,Text, Animated, StatusBar, StyleSheet } from "react-native"
+ import styles, {
+   _solidBackground,
+   _dynamicLogoStyle,
+@@ -17,12 +17,39 @@ class AnimatedSplash extends React.Component {
+   state = {
+     animationDone: false,
+     loadingProgress: new Animated.Value(0),
++    y: new Animated.Value(50),
++  }
++
++  showNotify = () => {
++    Animated.timing(this.state.y, {
++      toValue: 0,
++      duration: 600,
++      useNativeDriver: true,
++    }).start();
++  };
++
++  hideNotify = () => {
++    Animated.timing(this.state.y, {
++      toValue: 50,
++      duration: 600,
++      useNativeDriver: true,
++    }).start();
++  };
++
++  componentDidMount(){
++    if(!this.props.isConnected){
++    this.showNotify();
++    };
+   }
+ 
+   componentDidUpdate(prevProps) {
+-    const { isLoaded } = this.props
++    const { isLoaded , isConnected } = this.props
+     const { loadingProgress } = this.state
+ 
++    if(isConnected !== prevProps.isConnected){
++      isConnected ? this.hideNotify() : this.showNotify()
++    }
++
+     if (isLoaded && !prevProps.isLoaded) {
+       Animated.timing(loadingProgress, {
+         toValue: 100,
+@@ -53,6 +80,7 @@ class AnimatedSplash extends React.Component {
+   render() {
+     const { loadingProgress, animationDone } = this.state
+     const {
++      isConnected,
+       logoImage,
+       logoWidth,
+       logoHeight,
+@@ -145,16 +173,25 @@ class AnimatedSplash extends React.Component {
+               {customComponent ? (
+                 <Animated.View
+                   style={_dynamicCustomComponentStyle(
++
++                    logoOpacity,
++
++                  )}
++                >
++                   <Animated.Image
++                  source={logoImage}
++                  resizeMode={"contain"}
++                  style={_dynamicLogoStyle(
+                     logoScale,
+                     logoOpacity,
+                     logoWidth,
+                     logoHeight
+                   )}
+-                >
++                />
+                   {customComponent}
+                 </Animated.View>
+               ) : (
+-                <Animated.Image
++               <Animated.Image
+                   source={logoImage}
+                   resizeMode={"contain"}
+                   style={_dynamicLogoStyle(
+@@ -167,6 +204,23 @@ class AnimatedSplash extends React.Component {
+               )}
+             </View>
+           )}
++          {/* {!animationDone && this.props.progress()} */}
++          <Animated.View
++          style={[
++            {
++              position: 'absolute',
++              padding: 8,
++              left: 0,
++              right:0,
++              bottom: 0,
++              translateY: this.state.y,
++              backgroundColor: isConnected? '#15B7C9':'#eee',
++              alignItems: "center"
++            }]
++          }
++        >
++          <Text style={{color: isConnected ? 'white' : 'black',}}>{isConnected? "We are Connected": "No Connection"}</Text>
++        </Animated.View>
+         </View>
+       </View>
+     )
+@@ -174,6 +228,7 @@ class AnimatedSplash extends React.Component {
+ }
+ 
+ AnimatedSplash.propTypes = {
++  isConnected : PropTypes.bool,
+   preload: PropTypes.bool,
+   logoWidth: PropTypes.number,
+   children: PropTypes.element,
+@@ -188,6 +243,7 @@ AnimatedSplash.propTypes = {
+   ]),
+   translucent: PropTypes.bool,
+   customComponent: PropTypes.element,
++  progress : PropTypes.func,
+ }
+ 
+ export default AnimatedSplash
